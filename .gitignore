@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Credentials and decrypted secrets
+*.key
+*.pem
+*.p12
+*.kubeconfig
+kubeconfig*
+secrets/
+*.dec.yaml
+*.decrypted.yaml
+
+# Local cluster and tool state
+.kind/
+.kube/
+.cache/
+.tmp/
+tmp/
+
+# Logs and reports
+*.log
+reports/
+
+# Generated packages
+*.tgz
+
+# Terraform state if infrastructure examples are added
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
