@@ -109,8 +109,8 @@ and the boundary with admission policy.
       between environments.
 - [x] Demonstrate drift detection and automated self-healing.
 - [x] Demonstrate rollback by reverting the desired state in Git.
-- [ ] Add policy guardrails for security, resources, and deployment standards.
-- [ ] Add automated validation for manifests, configuration, and promotion
+- [x] Add policy guardrails for security, resources, and deployment standards.
+- [x] Add automated validation for manifests, configuration, and promotion
       rules.
 - [ ] Document the two-minute demo, operating model, adoption guidance, and
       supported customization boundaries.
