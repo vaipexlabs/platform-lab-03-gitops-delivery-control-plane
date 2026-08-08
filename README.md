@@ -39,7 +39,13 @@ software changes.
 
 ## Intended Delivery Flow
 
-![Vaipex GitOps Delivery Control Plane flow](docs/images/vaipex-gitops-delivery-control-plane-flow.png)
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/vaipexlabs/platform-lab-03-gitops-delivery-control-plane/main/docs/images/vaipex-gitops-delivery-control-plane-flow.png"
+    alt="Vaipex GitOps Delivery Control Plane flow"
+    width="100%"
+  />
+</p>
 
 CI will not deploy directly to Kubernetes. Its responsibility ends after
 building, verifying, and identifying the immutable release. Argo CD owns
