@@ -51,6 +51,19 @@ CI will not deploy directly to Kubernetes. Its responsibility ends after
 building, verifying, and identifying the immutable release. Argo CD owns
 deployment reconciliation from the approved state stored in Git.
 
+## Two-Minute Demo
+
+With the local platform already bootstrapped and reconciled, run:
+
+```bash
+./scripts/two-minute-demo.sh
+```
+
+The read-only demonstration validates the repository, verifies Argo CD health,
+compares every Git digest with its live deployment, and displays the recent
+desired-state audit trail. See the [Two-Minute Demo](docs/two-minute-demo.md)
+for prerequisites, expected evidence, and optional deeper demonstrations.
+
 ## Architecture and Contracts
 
 The [Reference Architecture](docs/reference-architecture.md) defines the
@@ -93,6 +106,14 @@ The [GitOps Validation](docs/gitops-validation.md) guide documents schema
 validation, repository-owned platform standards, local feedback, CI controls,
 and the boundary with admission policy.
 
+The [Operating Model](docs/operating-model.md) defines platform, application,
+reviewer, governance, and controller responsibilities together with standard
+release and recovery behavior.
+
+The [Adoption and Customization](docs/adoption.md) guide defines the rollout
+sequence, production-hardening considerations, supported extension points, and
+contracts that adopters should preserve.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
@@ -112,7 +133,7 @@ and the boundary with admission policy.
 - [x] Add policy guardrails for security, resources, and deployment standards.
 - [x] Add automated validation for manifests, configuration, and promotion
       rules.
-- [ ] Document the two-minute demo, operating model, adoption guidance, and
+- [x] Document the two-minute demo, operating model, adoption guidance, and
       supported customization boundaries.
 
 ## Planned Repository Structure
