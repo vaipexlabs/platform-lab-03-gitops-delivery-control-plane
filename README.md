@@ -87,7 +87,7 @@ health-verification workflow.
 - [x] Bootstrap Argo CD from version-controlled configuration.
 - [x] Define a sample application using reusable Kubernetes bases and
       environment overlays.
-- [ ] Configure automated reconciliation and health reporting for development,
+- [x] Configure automated reconciliation and health reporting for development,
       staging, and production.
 - [ ] Implement pull-request-based promotion of the same immutable image digest
       between environments.
