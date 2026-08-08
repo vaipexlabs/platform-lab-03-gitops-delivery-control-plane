@@ -68,8 +68,14 @@ verification and change proposal.
 
 ## See It in Two Minutes
 
-The timed demo assumes the local platform is already bootstrapped and
-reconciled. First-time setup is documented separately below.
+> **Important:** The two-minute timer starts after the local platform is
+> running. Creating the platform requires **Docker, kind, and kubectl**. The
+> timed demonstration also requires **kubeconform, jq, and yq**. Follow
+> [First-Time Local Setup](#first-time-local-setup) before running the demo on a
+> new workstation.
+
+The timed demo assumes the `vaipex-gitops` kind cluster is already bootstrapped
+with Argo CD and all applications are reconciled.
 
 ### 1. Install the demo tools
 
