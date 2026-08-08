@@ -14,15 +14,15 @@ community.
 
 ## Project at a Glance
 
-| Area | Intended capability |
-| --- | --- |
-| Desired state | Git records the approved application and environment configuration |
-| Reconciliation | Argo CD continuously compares Git with each Kubernetes environment |
-| Promotion | The same immutable release moves through development, staging, and production |
-| Governance | Pull requests, reviews, and automated policy checks protect environment changes |
-| Drift control | Out-of-band cluster changes are detected and corrected |
-| Recovery | Git history provides an auditable path to a known-good state |
-| Developer experience | Teams receive a consistent release path without direct production access |
+| Area                 | Intended capability                                                             |
+| -------------------- | ------------------------------------------------------------------------------- |
+| Desired state        | Git records the approved application and environment configuration              |
+| Reconciliation       | Argo CD continuously compares Git with each Kubernetes environment              |
+| Promotion            | The same immutable release moves through development, staging, and production   |
+| Governance           | Pull requests, reviews, and automated policy checks protect environment changes |
+| Drift control        | Out-of-band cluster changes are detected and corrected                          |
+| Recovery             | Git history provides an auditable path to a known-good state                    |
+| Developer experience | Teams receive a consistent release path without direct production access        |
 
 ## Why This Project Exists
 
@@ -39,37 +39,27 @@ software changes.
 
 ## Intended Delivery Flow
 
-```text
-Application source
-       │
-       ▼
-CI builds and verifies an immutable image
-       │
-       ▼
-Environment repository is updated by pull request
-       │
-       ▼
-Review, policy checks, and approval
-       │
-       ▼
-Argo CD detects the approved desired state
-       │
-       ▼
-Kubernetes is reconciled across dev → staging → production
-       │
-       ▼
-Health, drift, and rollout status provide operational feedback
-```
+![Vaipex GitOps Delivery Control Plane flow](docs/images/vaipex-gitops-delivery-control-plane-flow.png)
 
 CI will not deploy directly to Kubernetes. Its responsibility ends after
 building, verifying, and identifying the immutable release. Argo CD owns
 deployment reconciliation from the approved state stored in Git.
 
+## Architecture and Contracts
+
+The [Reference Architecture](docs/reference-architecture.md) defines the
+system components, repository boundaries, environment topology, Argo CD
+control model, trust relationships, secret boundary, and failure behavior.
+
+The [Environment Promotion Contract](docs/promotion-contract.md) defines the
+immutable release identity, minimum promotion gates, validation rules, drift
+behavior, rollback path, and ownership model.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
       `.gitignore`, and the project delivery contract.
-- [ ] Define the reference architecture, repository boundaries, trust model,
+- [x] Define the reference architecture, repository boundaries, trust model,
       and environment-promotion contract.
 - [ ] Create a reproducible local Kubernetes environment with `kind`.
 - [ ] Bootstrap Argo CD from version-controlled configuration.
