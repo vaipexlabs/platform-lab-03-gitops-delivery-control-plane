@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: vaipex-demo-environments
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - list:
+        elements:
+          - environment: dev
+            environmentName: development
+            namespace: apps-dev
+          - environment: staging
+            environmentName: staging
+            namespace: apps-staging
+          - environment: prod
+            environmentName: production
+            namespace: apps-prod
+  template:
+    metadata:
+      name: "vaipex-demo-{{.environment}}"
+      labels:
+        app.kubernetes.io/name: vaipex-demo
+        app.kubernetes.io/part-of: vaipex-gitops-delivery-control-plane
+        vaipex.io/environment: "{{.environmentName}}"
+    spec:
+      project: vaipex-applications
+      source:
+        repoURL: https://github.com/vaipexlabs/platform-lab-03-gitops-delivery-control-plane.git
+        targetRevision: main
+        path: "applications/vaipex-demo/overlays/{{.environment}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{.namespace}}"
+      syncPolicy:
+        automated:
+          enabled: true
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - ApplyOutOfSyncOnly=true
+          - CreateNamespace=false
+          - PruneLast=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 1m
+  syncPolicy:
+    preserveResourcesOnDeletion: false

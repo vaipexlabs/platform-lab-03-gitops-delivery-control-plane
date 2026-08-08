@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: vaipex-applications
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  description: Constrained delivery boundary for Vaipex demonstration workloads
+  sourceRepos:
+    - https://github.com/vaipexlabs/platform-lab-03-gitops-delivery-control-plane.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: apps-*
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+  orphanedResources:
+    warn: true
