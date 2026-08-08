@@ -104,7 +104,7 @@ verification, and roll-forward recovery.
 - [x] Implement pull-request-based promotion of the same immutable image digest
       between environments.
 - [x] Demonstrate drift detection and automated self-healing.
-- [ ] Demonstrate rollback by reverting the desired state in Git.
+- [x] Demonstrate rollback by reverting the desired state in Git.
 - [ ] Add policy guardrails for security, resources, and deployment standards.
 - [ ] Add automated validation for manifests, configuration, and promotion
       rules.
