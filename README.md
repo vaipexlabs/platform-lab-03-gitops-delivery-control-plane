@@ -65,6 +65,10 @@ The [Local Kubernetes Environment](docs/local-environment.md) documents the
 pinned runtime, namespace security contract, lifecycle scripts, and local
 verification workflow.
 
+The [Argo CD Bootstrap](docs/argocd-bootstrap.md) documents the pinned
+installation, verification contract, and boundary between cluster bootstrap
+and application configuration.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
@@ -72,7 +76,7 @@ verification workflow.
 - [x] Define the reference architecture, repository boundaries, trust model,
       and environment-promotion contract.
 - [x] Create a reproducible local Kubernetes environment with `kind`.
-- [ ] Bootstrap Argo CD from version-controlled configuration.
+- [x] Bootstrap Argo CD from version-controlled configuration.
 - [ ] Define a sample application using reusable Kubernetes bases and
       environment overlays.
 - [ ] Configure automated reconciliation and health reporting for development,
