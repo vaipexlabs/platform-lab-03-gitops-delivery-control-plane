@@ -61,13 +61,17 @@ The [Environment Promotion Contract](docs/promotion-contract.md) defines the
 immutable release identity, minimum promotion gates, validation rules, drift
 behavior, rollback path, and ownership model.
 
+The [Local Kubernetes Environment](docs/local-environment.md) documents the
+pinned runtime, namespace security contract, lifecycle scripts, and local
+verification workflow.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
       `.gitignore`, and the project delivery contract.
 - [x] Define the reference architecture, repository boundaries, trust model,
       and environment-promotion contract.
-- [ ] Create a reproducible local Kubernetes environment with `kind`.
+- [x] Create a reproducible local Kubernetes environment with `kind`.
 - [ ] Bootstrap Argo CD from version-controlled configuration.
 - [ ] Define a sample application using reusable Kubernetes bases and
       environment overlays.
