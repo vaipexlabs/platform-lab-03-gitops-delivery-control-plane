@@ -1,0 +1,76 @@
+name: GitOps validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/gitops-validation.yaml
+      - applications/**
+      - bootstrap/**
+      - clusters/**
+      - kind/**
+      - scripts/**
+      - versions.env
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/gitops-validation.yaml
+      - applications/**
+      - bootstrap/**
+      - clusters/**
+      - kind/**
+      - scripts/**
+      - versions.env
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate desired state
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out desired state
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned validators
+        run: |
+          source versions.env
+          temporary_directory="$(mktemp -d)"
+          trap 'rm -rf -- "${temporary_directory}"' EXIT
+
+          curl -fsSLo "${temporary_directory}/kubectl" \
+            "https://dl.k8s.io/release/${KUBERNETES_VERSION}/bin/linux/amd64/kubectl"
+          echo "${KUBECTL_LINUX_AMD64_SHA256}  ${temporary_directory}/kubectl" \
+            | sha256sum --check
+          sudo install -m 0755 "${temporary_directory}/kubectl" /usr/local/bin/kubectl
+
+          archive="kubeconform-linux-amd64.tar.gz"
+          release_url="https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}"
+          curl -fsSLo "${temporary_directory}/${archive}" "${release_url}/${archive}"
+          echo "${KUBECONFORM_LINUX_AMD64_SHA256}  ${temporary_directory}/${archive}" \
+            | sha256sum --check
+          tar -xzf "${temporary_directory}/${archive}" -C "${temporary_directory}" kubeconform
+          sudo install -m 0755 "${temporary_directory}/kubeconform" /usr/local/bin/kubeconform
+
+      - name: Check shell and Git formatting
+        env:
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          BEFORE_REVISION: ${{ github.event.before }}
+        run: |
+          bash -n scripts/*.sh
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git diff --check "${BASE_REVISION}...HEAD"
+          elif git cat-file -e "${BEFORE_REVISION}^{commit}" 2>/dev/null; then
+            git diff --check "${BEFORE_REVISION}..HEAD"
+          else
+            git show --check --format= HEAD
+          fi
+
+      - name: Validate rendered desired state
+        run: ./scripts/validate-manifests.sh

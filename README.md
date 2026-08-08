@@ -89,6 +89,10 @@ The [Git-Based Rollback](docs/rollback.md) guide documents historical digest
 validation, automated rollback proposals, review controls, reconciliation
 verification, and roll-forward recovery.
 
+The [GitOps Validation](docs/gitops-validation.md) guide documents schema
+validation, repository-owned platform standards, local feedback, CI controls,
+and the boundary with admission policy.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
