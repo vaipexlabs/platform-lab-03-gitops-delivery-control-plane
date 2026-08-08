@@ -93,7 +93,7 @@ boundary, and post-merge reconciliation behavior.
       environment overlays.
 - [x] Configure automated reconciliation and health reporting for development,
       staging, and production.
-- [ ] Implement pull-request-based promotion of the same immutable image digest
+- [x] Implement pull-request-based promotion of the same immutable image digest
       between environments.
 - [ ] Demonstrate drift detection and automated self-healing.
 - [ ] Demonstrate rollback by reverting the desired state in Git.
