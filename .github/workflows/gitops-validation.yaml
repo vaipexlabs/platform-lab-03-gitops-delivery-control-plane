@@ -58,6 +58,12 @@ jobs:
           tar -xzf "${temporary_directory}/${archive}" -C "${temporary_directory}" kubeconform
           sudo install -m 0755 "${temporary_directory}/kubeconform" /usr/local/bin/kubeconform
 
+          curl -fsSLo "${temporary_directory}/yq" \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          echo "${YQ_LINUX_AMD64_SHA256}  ${temporary_directory}/yq" \
+            | sha256sum --check
+          sudo install -m 0755 "${temporary_directory}/yq" /usr/local/bin/yq
+
       - name: Check shell and Git formatting
         env:
           BASE_REVISION: ${{ github.event.pull_request.base.sha }}

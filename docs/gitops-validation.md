@@ -23,9 +23,10 @@ resources. Argo CD remains the only component responsible for reconciliation.
 
 The `GitOps validation` workflow runs for pull requests that change platform
 configuration, application manifests, validation scripts, or pinned versions.
-It installs the repository-pinned Kubernetes and kubeconform versions, verifies
-their downloaded checksums, and runs the same validation entry point available
-to contributors.
+It installs the repository-pinned Kubernetes, kubeconform, and yq versions,
+verifies their downloaded checksums, and runs the same validation entry point
+available to contributors. Manifest policy evaluation is fully offline and
+does not attempt Kubernetes API discovery.
 
 The workflow has read-only repository permission. It does not receive a
 kubeconfig, registry credential, or production secret.
@@ -35,7 +36,7 @@ kubeconfig, registry credential, or production secret.
 Install the prerequisites:
 
 ```bash
-brew install kubectl kubeconform jq
+brew install kubectl kubeconform jq yq
 ```
 
 Run the complete validation:

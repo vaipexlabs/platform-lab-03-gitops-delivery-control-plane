@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-for required_command in kubectl jq; do
+for required_command in kubectl jq yq; do
   if ! command -v "${required_command}" >/dev/null 2>&1; then
     echo "Required command not found: ${required_command}" >&2
     exit 1
@@ -35,11 +35,7 @@ for environment in dev staging prod; do
   kubectl kustomize \
     "${REPOSITORY_ROOT}/applications/vaipex-demo/overlays/${environment}" \
     > "${rendered_manifest}"
-  kubectl create \
-    --dry-run=client \
-    --validate=false \
-    --filename "${rendered_manifest}" \
-    --output json \
+  yq eval-all --output-format json --indent 0 '.' "${rendered_manifest}" \
     > "${rendered_json}"
 
   if ! jq --slurp --exit-status \
@@ -82,11 +78,8 @@ for environment in dev staging prod; do
 done
 
 namespace_json="${temporary_directory}/namespaces.json"
-kubectl create \
-  --dry-run=client \
-  --validate=false \
-  --filename "${REPOSITORY_ROOT}/bootstrap/namespaces.yaml" \
-  --output json \
+yq eval-all --output-format json --indent 0 '.' \
+  "${REPOSITORY_ROOT}/bootstrap/namespaces.yaml" \
   > "${namespace_json}"
 
 if ! jq --slurp --exit-status '
