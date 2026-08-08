@@ -81,6 +81,10 @@ The [Pull-Request Promotion Workflow](docs/promotion-workflow.md) documents the
 automated proposal path, predecessor policy, repository permissions, review
 boundary, and post-merge reconciliation behavior.
 
+The [Drift Detection and Self-Healing](docs/self-healing.md) guide documents the
+controlled development-only drift demonstration, recovery safeguards, and
+production operating considerations.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
@@ -95,7 +99,7 @@ boundary, and post-merge reconciliation behavior.
       staging, and production.
 - [x] Implement pull-request-based promotion of the same immutable image digest
       between environments.
-- [ ] Demonstrate drift detection and automated self-healing.
+- [x] Demonstrate drift detection and automated self-healing.
 - [ ] Demonstrate rollback by reverting the desired state in Git.
 - [ ] Add policy guardrails for security, resources, and deployment standards.
 - [ ] Add automated validation for manifests, configuration, and promotion
