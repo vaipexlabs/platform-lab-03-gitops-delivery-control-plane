@@ -69,6 +69,10 @@ The [Argo CD Bootstrap](docs/argocd-bootstrap.md) documents the pinned
 installation, verification contract, and boundary between cluster bootstrap
 and application configuration.
 
+The [Sample Application](docs/sample-application.md) documents the immutable
+Go demonstration artifact, reusable Kubernetes base, environment overlays, and
+secure workload contract.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
@@ -77,7 +81,7 @@ and application configuration.
       and environment-promotion contract.
 - [x] Create a reproducible local Kubernetes environment with `kind`.
 - [x] Bootstrap Argo CD from version-controlled configuration.
-- [ ] Define a sample application using reusable Kubernetes bases and
+- [x] Define a sample application using reusable Kubernetes bases and
       environment overlays.
 - [ ] Configure automated reconciliation and health reporting for development,
       staging, and production.

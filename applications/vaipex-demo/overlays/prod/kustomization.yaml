@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: apps-prod
+resources:
+  - ../../base
+replicas:
+  - name: vaipex-demo
+    count: 2
+labels:
+  - pairs:
+      vaipex.io/environment: production
+images:
+  - name: docker.io/traefik/whoami
+    newName: docker.io/traefik/whoami
+    digest: sha256:200689790a0a0ea48ca45992e0450bc26ccab5307375b41c84dfc4f2475937ab
