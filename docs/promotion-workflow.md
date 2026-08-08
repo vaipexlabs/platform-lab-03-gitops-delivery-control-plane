@@ -17,10 +17,11 @@ Staging pull request using the development digest
 Production pull request using the staging digest
 ```
 
-Development accepts a new syntactically valid digest. Staging accepts only the
-digest currently declared in development. Production accepts only the digest
-currently declared in staging. Each pull request changes exactly one overlay,
-and only its `digest` field may change.
+Development accepts a new syntactically valid digest. A normal staging change
+must match development, and a normal production change must match staging. A
+rollback may instead select a digest previously approved in the target
+environment. Each pull request changes exactly one overlay, and only its
+`digest` field may change.
 
 ## Repository Setup
 
@@ -63,6 +64,7 @@ boundary, not an Argo CD requirement.
 - No other content in the selected overlay changed.
 - Staging matches the currently approved development digest.
 - Production matches the currently approved staging digest.
+- A rollback digest previously existed in the selected environment.
 
 The checkout action is pinned to an immutable commit rather than a moving tag.
 The PR validation job receives read-only repository permission.

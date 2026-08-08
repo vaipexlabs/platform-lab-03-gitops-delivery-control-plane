@@ -85,6 +85,10 @@ The [Drift Detection and Self-Healing](docs/self-healing.md) guide documents the
 controlled development-only drift demonstration, recovery safeguards, and
 production operating considerations.
 
+The [Git-Based Rollback](docs/rollback.md) guide documents historical digest
+validation, automated rollback proposals, review controls, reconciliation
+verification, and roll-forward recovery.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware

@@ -26,7 +26,7 @@ changed_overlay_files="$(
 changed_overlay_count="$(printf '%s\n' "${changed_overlay_files}" | awk 'NF { count++ } END { print count + 0 }')"
 
 if [[ "${changed_overlay_count}" -ne 1 ]]; then
-  echo "A promotion must change exactly one environment overlay; found ${changed_overlay_count}." >&2
+  echo "An environment change must update exactly one overlay; found ${changed_overlay_count}." >&2
   exit 1
 fi
 
@@ -95,22 +95,48 @@ git -C "${REPOSITORY_ROOT}" show "${head_revision}:${target_file}" \
   > "${temporary_directory}/head.yaml"
 
 if ! diff -u "${temporary_directory}/base.yaml" "${temporary_directory}/head.yaml"; then
-  echo "A promotion overlay may change only its image digest." >&2
+  echo "An environment change may update only its image digest." >&2
   exit 1
 fi
 
+digest_existed_in_environment() {
+  local revision="$1"
+  local file="$2"
+  local expected_digest="$3"
+  local historical_revision
+  local historical_digest
+
+  while IFS= read -r historical_revision; do
+    historical_digest="$(digest_from_revision "${historical_revision}" "${file}")"
+    if [[ "${historical_digest}" == "${expected_digest}" ]]; then
+      return 0
+    fi
+  done < <(git -C "${REPOSITORY_ROOT}" rev-list "${revision}" -- "${file}")
+
+  return 1
+}
+
+change_mode=promotion
 if [[ -n "${predecessor_environment}" ]]; then
   predecessor_file="${overlay_root}/${predecessor_environment}/kustomization.yaml"
   predecessor_digest="$(digest_from_revision "${head_revision}" "${predecessor_file}")"
   if [[ "${head_digest}" != "${predecessor_digest}" ]]; then
-    echo "${target_environment} must promote the digest currently approved in ${predecessor_environment}." >&2
-    echo "${target_environment}: ${head_digest}" >&2
-    echo "${predecessor_environment}: ${predecessor_digest}" >&2
-    exit 1
+    if digest_existed_in_environment "${base_revision}" "${target_file}" "${head_digest}"; then
+      change_mode=rollback
+    else
+      echo "${target_environment} must use the current ${predecessor_environment} digest" >&2
+      echo "or a digest previously approved in ${target_environment}." >&2
+      echo "${target_environment}: ${head_digest}" >&2
+      echo "${predecessor_environment}: ${predecessor_digest}" >&2
+      exit 1
+    fi
   fi
+elif digest_existed_in_environment "${base_revision}" "${target_file}" "${head_digest}"; then
+  change_mode=rollback
 fi
 
-echo "Promotion policy passed:"
+echo "Environment change policy passed:"
+echo "  mode:        ${change_mode}"
 echo "  environment: ${target_environment}"
 echo "  from:        ${base_digest}"
 echo "  to:          ${head_digest}"
