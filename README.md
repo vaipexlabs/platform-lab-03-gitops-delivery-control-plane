@@ -1,8 +1,8 @@
 # Vaipex GitOps Delivery Control Plane
 
 An open reference implementation for promoting immutable application releases
-across Kubernetes environments through Git-based change control, continuous
-reconciliation, and explicit platform guardrails.
+across Kubernetes environments through pull-request governance, automated
+validation, and continuous reconciliation with Argo CD.
 
 Developed by **Vaipex Labs** for the developer and platform engineering
 community.
@@ -10,34 +10,42 @@ community.
 ![GitOps](https://img.shields.io/badge/Delivery-GitOps-326CE5)
 ![Kubernetes](https://img.shields.io/badge/Runtime-Kubernetes-326CE5?logo=kubernetes&logoColor=white)
 ![Argo CD](https://img.shields.io/badge/Reconciliation-Argo%20CD-EF7B4D?logo=argo&logoColor=white)
+![Validation](https://img.shields.io/badge/Validation-Kubeconform-2E8B57)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 
-## Project at a Glance
+## What This Project Delivers
 
-| Area                 | Intended capability                                                             |
-| -------------------- | ------------------------------------------------------------------------------- |
-| Desired state        | Git records the approved application and environment configuration              |
-| Reconciliation       | Argo CD continuously compares Git with each Kubernetes environment              |
-| Promotion            | The same immutable release moves through development, staging, and production   |
-| Governance           | Pull requests, reviews, and automated policy checks protect environment changes |
-| Drift control        | Out-of-band cluster changes are detected and corrected                          |
-| Recovery             | Git history provides an auditable path to a known-good state                    |
-| Developer experience | Teams receive a consistent release path without direct production access        |
+| Capability                       | What it demonstrates                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Git as desired state             | Every approved environment configuration is version controlled and auditable                                 |
+| Three-environment delivery       | One immutable release moves through development, staging, and production                                     |
+| Pull-request promotion           | GitHub Actions proposes digest-only environment changes for review                                           |
+| Governed rollback                | Automation can restore only a digest previously approved in the target environment                           |
+| Continuous reconciliation        | Argo CD detects merged Git changes and converges Kubernetes automatically                                    |
+| Drift detection and self-healing | Out-of-band cluster changes are surfaced and reversed                                                        |
+| Automated quality gates          | Kustomize rendering, Kubernetes schemas, promotion order, and change scope are validated                     |
+| Secure workload defaults         | Non-root execution, restricted privileges, read-only filesystems, probes, and resource controls are enforced |
+| Constrained deployment authority | Argo CD projects restrict repositories, namespaces, and permitted resource kinds                             |
+| Credential separation            | CI proposes changes without credentials that can mutate production clusters                                  |
+| Reproducible local platform      | Pinned `kind`, Kubernetes, Argo CD, and validation versions create a repeatable demonstration                |
+| Operational evidence             | One command proves validation, reconciliation, release identity, readiness, and Git history                  |
 
-## Why This Project Exists
+## Why It Matters
 
-Traditional deployment pipelines often combine artifact creation, environment
-configuration, production credentials, and imperative deployment commands in
-one workflow. That makes it harder to determine the approved state of an
-environment, identify configuration drift, and reproduce or reverse a change.
+Traditional delivery pipelines often combine artifact creation, environment
+configuration, production credentials, and imperative deployment commands.
+That makes it difficult to identify the approved state, detect drift, and
+recover consistently.
 
-This project demonstrates a GitOps operating model in which CI produces an
-immutable artifact, Git records the desired environment state, and Argo CD
-reconciles Kubernetes to that state. Production changes become reviewable,
-auditable, and recoverable through the same version-control workflow used for
-software changes.
+This project separates those responsibilities:
 
-## Intended Delivery Flow
+- Application CI produces an immutable artifact.
+- Git records which artifact is approved for each environment.
+- Pull requests and automated checks govern desired-state changes.
+- Argo CD—not CI—owns deployment and ongoing reconciliation.
+- Git history provides the audit and recovery path.
+
+## Delivery Flow
 
 <p align="center">
   <img
@@ -47,143 +55,228 @@ software changes.
   />
 </p>
 
-CI will not deploy directly to Kubernetes. Its responsibility ends after
-building, verifying, and identifying the immutable release. Argo CD owns
-deployment reconciliation from the approved state stored in Git.
+1. Application CI tests and publishes an image identified by a SHA-256 digest.
+2. Automation proposes that digest for an environment through a pull request.
+3. Repository checks validate schemas, platform standards, promotion order,
+   rollback history, and change scope.
+4. An authorized reviewer approves and merges the desired-state change.
+5. Argo CD detects the new Git revision and reconciles the target environment.
+6. Kubernetes health and Argo CD status provide operational feedback.
 
-## Two-Minute Demo
+CI never deploys directly to Kubernetes. Its responsibility ends after
+verification and change proposal.
 
-With the local platform already bootstrapped and reconciled, run:
+## See It in Two Minutes
+
+The timed demo assumes the local platform is already bootstrapped and
+reconciled. First-time setup is documented separately below.
+
+### 1. Install the demo tools
+
+```bash
+brew install kubectl kubeconform jq yq
+```
+
+The first schema-validation run requires internet access so kubeconform can
+retrieve the pinned Kubernetes schemas.
+
+### 2. Run the demonstration
 
 ```bash
 ./scripts/two-minute-demo.sh
 ```
 
-The read-only demonstration validates the repository, verifies Argo CD health,
-compares every Git digest with its live deployment, and displays the recent
-desired-state audit trail. See the [Two-Minute Demo](docs/two-minute-demo.md)
-for prerequisites, expected evidence, and optional deeper demonstrations.
+### 3. Follow the four proof points
 
-## Architecture and Contracts
+The script is read-only and walks through the platform in this order:
 
-The [Reference Architecture](docs/reference-architecture.md) defines the
-system components, repository boundaries, environment topology, Argo CD
-control model, trust relationships, secret boundary, and failure behavior.
+#### Step 1 — Validate desired state
 
-The [Environment Promotion Contract](docs/promotion-contract.md) defines the
-immutable release identity, minimum promotion gates, validation rules, drift
-behavior, rollback path, and ownership model.
+- Renders the development, staging, and production Kustomize overlays.
+- Validates every rendered resource against the pinned Kubernetes schema.
+- Checks immutable image digests, security contexts, resource requests and
+  limits, health probes, service-account behavior, and Pod Security labels.
 
-The [Local Kubernetes Environment](docs/local-environment.md) documents the
-pinned runtime, namespace security contract, lifecycle scripts, and local
-verification workflow.
+Expected evidence:
 
-The [Argo CD Bootstrap](docs/argocd-bootstrap.md) documents the pinned
-installation, verification contract, and boundary between cluster bootstrap
-and application configuration.
+```text
+GitOps manifest validation passed.
+```
 
-The [Sample Application](docs/sample-application.md) documents the immutable
-Go demonstration artifact, reusable Kubernetes base, environment overlays, and
-secure workload contract.
+#### Step 2 — Verify reconciliation
 
-The [Automated Reconciliation](docs/reconciliation.md) guide documents the root
-application, project guardrails, environment generation, activation, and
-health-verification workflow.
+- Reads the root Argo CD application and all three environment applications.
+- Requires each application to report `Synced` and `Healthy`.
+- Displays the Git revision currently observed by each application.
 
-The [Pull-Request Promotion Workflow](docs/promotion-workflow.md) documents the
-automated proposal path, predecessor policy, repository permissions, review
-boundary, and post-merge reconciliation behavior.
+#### Step 3 — Compare Git with the runtime
 
-The [Drift Detection and Self-Healing](docs/self-healing.md) guide documents the
-controlled development-only drift demonstration, recovery safeguards, and
-production operating considerations.
+- Reads the approved digest from each environment overlay.
+- Reads the image and replica state from the live Kubernetes deployment.
+- Fails if Git and the runtime disagree.
 
-The [Git-Based Rollback](docs/rollback.md) guide documents historical digest
-validation, automated rollback proposals, review controls, reconciliation
-verification, and roll-forward recovery.
+The output provides one row each for `dev`, `staging`, and `prod`, including
+sync, health, ready replicas, and the deployed digest.
 
-The [GitOps Validation](docs/gitops-validation.md) guide documents schema
-validation, repository-owned platform standards, local feedback, CI controls,
-and the boundary with admission policy.
+#### Step 4 — Show the audit trail
 
-The [Operating Model](docs/operating-model.md) defines platform, application,
-reviewer, governance, and controller responsibilities together with standard
-release and recovery behavior.
+- Displays recent desired-state commits.
+- Makes promotions and rollbacks visible as ordinary Git history.
 
-The [Adoption and Customization](docs/adoption.md) guide defines the rollout
-sequence, production-hardening considerations, supported extension points, and
-contracts that adopters should preserve.
+Successful completion ends with:
 
-## Delivery Roadmap
+```text
+Demo complete: validated, reconciled, immutable, healthy, and auditable.
+```
 
-- [x] Initialize the public repository with Apache License 2.0, a GitOps-aware
-      `.gitignore`, and the project delivery contract.
-- [x] Define the reference architecture, repository boundaries, trust model,
-      and environment-promotion contract.
-- [x] Create a reproducible local Kubernetes environment with `kind`.
-- [x] Bootstrap Argo CD from version-controlled configuration.
-- [x] Define a sample application using reusable Kubernetes bases and
-      environment overlays.
-- [x] Configure automated reconciliation and health reporting for development,
-      staging, and production.
-- [x] Implement pull-request-based promotion of the same immutable image digest
-      between environments.
-- [x] Demonstrate drift detection and automated self-healing.
-- [x] Demonstrate rollback by reverting the desired state in Git.
-- [x] Add policy guardrails for security, resources, and deployment standards.
-- [x] Add automated validation for manifests, configuration, and promotion
-      rules.
-- [x] Document the two-minute demo, operating model, adoption guidance, and
-      supported customization boundaries.
+The command does not patch workloads, trigger a promotion, or change the
+active `kubectl` context. See the [complete demo guide](docs/two-minute-demo.md)
+for the presentation narrative and deeper follow-on demonstrations.
 
-## Planned Repository Structure
+## First-Time Local Setup
+
+### Prerequisites
+
+- macOS with Homebrew
+- Docker Desktop or another Docker-compatible runtime
+- Git
+
+Install the required CLIs:
+
+```bash
+brew install kind kubectl kubeconform jq yq
+```
+
+The repository intentionally pins a supported `kind` version. If Homebrew
+installs a different version, follow the
+[local environment guide](docs/local-environment.md) before creating the
+cluster.
+
+### Create the platform
+
+```bash
+./scripts/create-cluster.sh
+./scripts/bootstrap-argocd.sh
+```
+
+Commit and push any desired-state changes before enabling reconciliation. Argo
+CD reads `origin/main`, not an uncommitted local working tree.
+
+```bash
+./scripts/configure-reconciliation.sh
+./scripts/two-minute-demo.sh
+```
+
+### Clean up
+
+```bash
+./scripts/delete-cluster.sh
+```
+
+The cleanup script deletes only the `vaipex-gitops` kind cluster. Git retains
+the complete desired state.
+
+## Explore the Platform
+
+| Workflow                 | Command or entry point                                                                                                                          | Evidence                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Validate desired state   | `./scripts/validate-manifests.sh`                                                                                                               | Rendered schemas and platform standards pass   |
+| Verify reconciliation    | `./scripts/verify-reconciliation.sh`                                                                                                            | Argo CD applications and workloads are healthy |
+| Propose promotion        | [Propose image promotion](https://github.com/vaipexlabs/platform-lab-03-gitops-delivery-control-plane/actions/workflows/propose-promotion.yaml) | A digest-only promotion PR is created          |
+| Propose rollback         | [Propose image rollback](https://github.com/vaipexlabs/platform-lab-03-gitops-delivery-control-plane/actions/workflows/propose-rollback.yaml)   | A historical-digest rollback PR is created     |
+| Demonstrate self-healing | `./scripts/demonstrate-self-healing.sh`                                                                                                         | Development drift is detected and corrected    |
+| Run the complete demo    | `./scripts/two-minute-demo.sh`                                                                                                                  | Git, Argo CD, and Kubernetes agree end to end  |
+
+## Repository Map
 
 ```text
 .
-├── bootstrap/              # Argo CD installation and root configuration
-├── clusters/               # Environment entry points
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
-├── applications/           # Reusable application definitions
-├── policies/               # Platform validation and admission policies
-├── scripts/                # Reproducible local workflows
-└── docs/                   # Architecture, operations, and adoption guidance
+├── .github/workflows/       # Validation, promotion, and rollback automation
+├── applications/
+│   └── vaipex-demo/
+│       ├── base/            # Secure reusable Kubernetes resources
+│       └── overlays/        # Development, staging, and production state
+├── bootstrap/               # Namespaces, Argo CD installation, and root app
+├── clusters/local/          # Argo CD project and environment ApplicationSet
+├── docs/                    # Architecture, operations, recovery, and adoption
+├── kind/                    # Reproducible local cluster topology
+├── scripts/                 # Lifecycle, validation, promotion, and demo tools
+└── versions.env             # Supported tool and runtime versions
 ```
 
-The structure will evolve only when an implementation increment establishes a
-clear ownership or deployment boundary.
+## Security and Governance Controls
 
-## Core Principles
+- Images must use immutable SHA-256 digests.
+- Workloads run as a non-root user with the runtime-default seccomp profile.
+- Containers disable privilege escalation, drop all Linux capabilities, and
+  use a read-only root filesystem.
+- CPU and memory requests and limits are mandatory.
+- Liveness and readiness probes are mandatory.
+- Application namespaces enforce the restricted Pod Security profile.
+- Service-account tokens are not mounted when the workload does not need them.
+- Argo CD application projects restrict source repositories, destination
+  namespaces, and resource kinds.
+- CI has read-only validation access and no Kubernetes deployment credentials.
+- Production rollback targets must already exist in production history.
 
-- **Git is the desired-state record.** Approved environment configuration is
-  version controlled and reviewable.
-- **Artifacts are immutable.** Environments promote the same image digest
-  rather than rebuilding application code.
-- **CI and deployment are separated.** CI validates and publishes; Argo CD
-  reconciles.
-- **Production access is minimized.** Application delivery does not require CI
-  to hold production cluster credentials.
-- **Drift is visible.** Manual cluster changes are detected rather than silently
-  becoming the new standard.
-- **Rollback is declarative.** Recovery restores a known-good Git state and lets
-  reconciliation converge the cluster.
-- **Exceptions are explicit.** Policy deviations require a documented review
-  path.
+These repository controls provide fast developer feedback. Organization-wide
+admission policy belongs in a dedicated policy platform and can complement
+this implementation at the documented boundary.
 
-## Scope
+## Design Principles
 
-The initial implementation focuses on one application promoted through three
-logical Kubernetes environments. It is not intended to provide a general
-multi-cloud control plane, replace an artifact registry, or demonstrate every
-Argo ecosystem capability.
+- **Git is authoritative.** Manual cluster state never becomes desired state.
+- **Artifacts are immutable.** Environments promote identity, not mutable tags.
+- **Approval precedes deployment.** Production intent is reviewed in Git.
+- **CI and reconciliation are separate.** CI validates; Argo CD deploys.
+- **Drift is visible and recoverable.** Self-healing restores approved state.
+- **Rollback is declarative.** Recovery is another reviewed Git change.
+- **Exceptions are explicit.** Deviations require ownership, rationale, and an
+  expiry path.
+
+## Documentation
+
+| Guide                                                        | Purpose                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| [Reference architecture](docs/reference-architecture.md)     | Components, boundaries, trust model, topology, and failure behavior       |
+| [Environment promotion contract](docs/promotion-contract.md) | Artifact identity, gates, ownership, drift, and rollback rules            |
+| [Local Kubernetes environment](docs/local-environment.md)    | Pinned runtime, namespace security, creation, verification, and cleanup   |
+| [Argo CD bootstrap](docs/argocd-bootstrap.md)                | Installation, version contract, and control-plane verification            |
+| [Sample application](docs/sample-application.md)             | Reusable base, overlays, secure workload contract, and artifact choice    |
+| [Automated reconciliation](docs/reconciliation.md)           | Root application, project constraints, ApplicationSet, and activation     |
+| [Promotion workflow](docs/promotion-workflow.md)             | Automated PR proposal, sequencing policy, review, and reconciliation      |
+| [Self-healing](docs/self-healing.md)                         | Controlled drift demonstration and operational safeguards                 |
+| [Git-based rollback](docs/rollback.md)                       | Historical-digest validation, rollback PR, verification, and roll-forward |
+| [GitOps validation](docs/gitops-validation.md)               | Schema checks, platform standards, CI controls, and local feedback        |
+| [Two-minute demo](docs/two-minute-demo.md)                   | Demonstration narrative, expected evidence, and optional extensions       |
+| [Operating model](docs/operating-model.md)                   | Roles, release flow, operational events, and service indicators           |
+| [Adoption and customization](docs/adoption.md)               | Rollout sequence, production hardening, and supported extension points    |
+
+## Adoption Boundaries
+
+This repository demonstrates one application across three logical environments
+in a local cluster. Production adopters should replace namespace-only isolation
+with the appropriate cluster, account, network, identity, and regional
+boundaries.
+
+The following contracts should remain intact while implementations evolve:
+
+- Git remains the reviewed desired-state record.
+- Releases are promoted by immutable digest.
+- CI does not receive direct production mutation privileges.
+- Argo CD reconciles only approved repositories and destinations.
+- Plaintext secrets do not enter the GitOps repository.
+- Runtime admission policy complements repository validation rather than
+  replacing developer feedback.
+
+See [Adoption and Customization](docs/adoption.md) for supported extension
+points and production-hardening guidance.
 
 ## Contributing
 
 Community feedback and contributions are welcome. Changes should preserve the
 declarative operating model, immutable promotion contract, environment
-boundaries, and auditable change history—or document a narrowly scoped
-exception.
+boundaries, and auditable history—or document a narrowly scoped exception.
 
 ## License
 
