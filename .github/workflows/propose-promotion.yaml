@@ -1,0 +1,85 @@
+name: Propose image promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Environment that should receive the approved digest
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      image_digest:
+        description: Immutable image digest in sha256:<64 lowercase hex> form
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: promotion-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    name: Open promotion pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out desired state
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Prepare promotion
+        id: promotion
+        env:
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          short_digest="${IMAGE_DIGEST#sha256:}"
+          short_digest="${short_digest:0:12}"
+          branch="promotion/${TARGET_ENVIRONMENT}-${short_digest}-${GITHUB_RUN_ID}"
+
+          git switch --create "${branch}"
+          ./scripts/promote-image.sh "${TARGET_ENVIRONMENT}" "${IMAGE_DIGEST}"
+          git diff --check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "applications/vaipex-demo/overlays/${TARGET_ENVIRONMENT}/kustomization.yaml"
+          git commit -m "promote: ${TARGET_ENVIRONMENT} to ${short_digest}"
+          git push --set-upstream origin "${branch}"
+
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+          echo "short_digest=${short_digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          PROMOTION_BRANCH: ${{ steps.promotion.outputs.branch }}
+          SHORT_DIGEST: ${{ steps.promotion.outputs.short_digest }}
+        run: |
+          body_file="${RUNNER_TEMP}/promotion-pull-request.md"
+          {
+            echo "## Promotion"
+            echo
+            echo "- Target environment: \`${TARGET_ENVIRONMENT}\`"
+            echo "- Immutable image: \`${IMAGE_DIGEST}\`"
+            echo "- Requested by: \`${GITHUB_ACTOR}\`"
+            echo
+            echo "The promotion policy workflow must pass before this change is merged."
+          } > "${body_file}"
+
+          pull_request_url="$(gh pr create \
+            --base main \
+            --head "${PROMOTION_BRANCH}" \
+            --title "Promote ${TARGET_ENVIRONMENT} to ${SHORT_DIGEST}" \
+            --body-file "${body_file}")"
+
+          echo "Promotion pull request: ${pull_request_url}" >> "${GITHUB_STEP_SUMMARY}"

@@ -77,6 +77,10 @@ The [Automated Reconciliation](docs/reconciliation.md) guide documents the root
 application, project guardrails, environment generation, activation, and
 health-verification workflow.
 
+The [Pull-Request Promotion Workflow](docs/promotion-workflow.md) documents the
+automated proposal path, predecessor policy, repository permissions, review
+boundary, and post-merge reconciliation behavior.
+
 ## Delivery Roadmap
 
 - [x] Initialize the public repository with Apache License 2.0, a GitOps-aware

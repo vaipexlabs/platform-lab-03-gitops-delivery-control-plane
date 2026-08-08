@@ -1,0 +1,29 @@
+name: Promotion policy
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - applications/vaipex-demo/overlays/*/kustomization.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate environment promotion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out proposed revision
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate promotion order and scope
+        env:
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          HEAD_REVISION: ${{ github.event.pull_request.head.sha }}
+        run: ./scripts/validate-promotion.sh "${BASE_REVISION}" "${HEAD_REVISION}"
